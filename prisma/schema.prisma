@@ -1,0 +1,172 @@
+// schema.prisma
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum AccountType {
+  BANK
+  CASH
+  WALLET
+  CREDIT_CARD
+  SAVINGS
+  LOAN
+  INVESTMENT
+  OTHER
+}
+
+enum TransactionType {
+  INCOME
+  EXPENSE
+  TRANSFER
+}
+
+enum RecurringInterval {
+  DAILY
+  WEEKLY
+  MONTHLY
+  YEARLY
+}
+
+model User {
+  id        String   @id // Clerk/NextAuth User ID
+  email     String   @unique
+  name      String?
+  currency  String   @default("USD")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  accounts      Account[]
+  categories    Category[]
+  transactions  Transaction[]
+  budgets       Budget[]
+  goals         Goal[]
+  subscriptions Subscription[]
+
+  @@map("users")
+}
+
+model Account {
+  id      String      @id @default(cuid())
+  userId  String
+  user    User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name    String
+  type    AccountType
+  balance Decimal     @default(0.00) // Current balance (negative for debts)
+  color   String?     @default("#000000")
+  icon    String?
+
+  // Specific fields for Loans/Credit Cards
+  interestRate   Decimal?
+  minimumPayment Decimal?
+  dueDate        Int? // Day of month (1-31)
+
+  // New Credit Card Fields
+  creditLimit Decimal?
+  cutoffDay   Int?
+  paymentDay  Int?
+  theme       String?  @default("#000000")
+
+  transactions  Transaction[]
+  subscriptions Subscription[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  @@map("accounts")
+}
+
+model Category {
+  id     String          @id @default(cuid())
+  userId String
+  user   User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name   String
+  type   TransactionType // INCOME or EXPENSE (Transfers usually don't need category or have a special one)
+  icon   String?
+  color  String?
+
+  transactions Transaction[]
+  budgets      Budget[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  @@unique([userId, name, type]) // Prevent duplicate categories for same user
+  @@map("categories")
+}
+
+model Transaction {
+  id          String          @id @default(cuid())
+  userId      String // Denormalized for easier querying
+  user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accountId   String
+  account     Account         @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  categoryId  String?
+  category    Category?       @relation(fields: [categoryId], references: [id])
+  type        TransactionType
+  amount      Decimal
+  date        DateTime
+  description String?
+
+  toAccountId String?
+
+  isRecurring Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId, date])
+  @@map("transactions")
+}
+
+model Budget {
+  id         String    @id @default(cuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  categoryId String? // Null for "Global Budget"
+  category   Category? @relation(fields: [categoryId], references: [id])
+  amount     Decimal
+  period     String    @default("MONTHLY") // Could be Enum
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("budgets")
+}
+
+model Goal {
+  id            String    @id @default(cuid())
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name          String
+  targetAmount  Decimal
+  currentAmount Decimal   @default(0) // Can be updated manually or linked to savings account balance
+  deadline      DateTime?
+  color         String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("goals")
+}
+
+model Subscription {
+  id              String            @id @default(cuid())
+  userId          String
+  user            User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accountId       String?
+  account         Account?          @relation(fields: [accountId], references: [id])
+  name            String
+  amount          Decimal
+  frequency       RecurringInterval
+  nextPaymentDate DateTime
+  status          String            @default("ACTIVE") // ACTIVE, CANCELLED
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("subscriptions")
+}
