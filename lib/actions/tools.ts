@@ -8,7 +8,7 @@ import { RecurringInterval } from "@prisma/client"
 
 export async function getSubscriptions() {
     const user = await currentUser()
-    if (!user) redirect("/sign-in")
+    if (!user) return []
 
     const subscriptions = await db.subscription.findMany({
         where: { userId: user.id },
@@ -21,7 +21,7 @@ export async function getSubscriptions() {
 
 export async function createSubscription(formData: FormData) {
     const user = await currentUser()
-    if (!user) redirect("/sign-in")
+    if (!user) return
 
     const name = formData.get("name") as string
     const amount = parseFloat(formData.get("amount") as string)
@@ -47,7 +47,7 @@ export async function createSubscription(formData: FormData) {
 
 export async function deleteSubscription(id: string) {
     const user = await currentUser()
-    if (!user) redirect("/sign-in")
+    if (!user) return
 
     await db.subscription.delete({
         where: { id, userId: user.id }
@@ -58,7 +58,7 @@ export async function deleteSubscription(id: string) {
 
 export async function getGoals() {
     const user = await currentUser()
-    if (!user) redirect("/sign-in")
+    if (!user) return []
 
     const goals = await db.goal.findMany({
         where: { userId: user.id },
@@ -70,7 +70,7 @@ export async function getGoals() {
 
 export async function createGoal(formData: FormData) {
     const user = await currentUser()
-    if (!user) redirect("/sign-in")
+    if (!user) return
 
     const name = formData.get("name") as string
     const targetAmount = parseFloat(formData.get("targetAmount") as string)
@@ -94,7 +94,7 @@ export async function createGoal(formData: FormData) {
 
 export async function deleteGoal(id: string) {
     const user = await currentUser()
-    if (!user) redirect("/sign-in")
+    if (!user) return
 
     await db.goal.delete({
         where: { id, userId: user.id }
@@ -105,7 +105,7 @@ export async function deleteGoal(id: string) {
 
 export async function getDebts() {
     const user = await currentUser()
-    if (!user) redirect("/sign-in")
+    if (!user) return []
 
     const debts = await db.debt.findMany({
         where: { userId: user.id },
@@ -118,7 +118,7 @@ export async function getDebts() {
 
 export async function createDebt(formData: FormData) {
     const user = await currentUser()
-    if (!user) redirect("/sign-in")
+    if (!user) return
 
     const name = formData.get("name") as string
     const totalAmount = parseFloat(formData.get("totalAmount") as string)
@@ -147,7 +147,7 @@ export async function createDebt(formData: FormData) {
 
 export async function deleteDebt(id: string) {
     const user = await currentUser()
-    if (!user) redirect("/sign-in")
+    if (!user) return
 
     await db.debt.delete({
         where: { id, userId: user.id }
@@ -158,7 +158,7 @@ export async function deleteDebt(id: string) {
 
 export async function updateDebt(id: string, formData: FormData) {
     const user = await currentUser()
-    if (!user) redirect("/sign-in")
+    if (!user) return
 
     const name = formData.get("name") as string
     const totalAmount = parseFloat(formData.get("totalAmount") as string)
@@ -186,7 +186,7 @@ export async function updateDebt(id: string, formData: FormData) {
 
 export async function payDebt(debtId: string, amount: number, sourceAccountId: string) {
     const user = await currentUser()
-    if (!user) redirect("/sign-in")
+    if (!user) return
 
     const debt = await db.debt.findUnique({
         where: { id: debtId, userId: user.id },
@@ -293,7 +293,7 @@ export async function payDebt(debtId: string, amount: number, sourceAccountId: s
 
 export async function updateGoal(id: string, formData: FormData) {
     const user = await currentUser()
-    if (!user) redirect("/sign-in")
+    if (!user) return
 
     const name = formData.get("name") as string
     const targetAmount = parseFloat(formData.get("targetAmount") as string)
@@ -318,7 +318,7 @@ export async function updateGoal(id: string, formData: FormData) {
 
 export async function contributeToGoal(goalId: string, amount: number, sourceAccountId: string, destinationAccountId: string) {
     const user = await currentUser()
-    if (!user) redirect("/sign-in")
+    if (!user) return
 
     const goal = await db.goal.findUnique({
         where: { id: goalId, userId: user.id }

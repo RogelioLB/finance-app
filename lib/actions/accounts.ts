@@ -8,7 +8,7 @@ import { AccountType } from "@prisma/client"
 
 export async function getAccounts() {
     const user = await currentUser()
-    if (!user) redirect("/sign-in")
+    if (!user) return []
 
     return await db.account.findMany({
         where: { userId: user.id },
@@ -19,7 +19,7 @@ export async function getAccounts() {
 // Update createAccount
 export async function createAccount(formData: FormData) {
     const user = await currentUser()
-    if (!user) redirect("/sign-in")
+    if (!user) return
 
     const name = formData.get("name") as string
     const balance = parseFloat(formData.get("balance") as string)
@@ -51,7 +51,7 @@ export async function createAccount(formData: FormData) {
 // Update updateAccount
 export async function updateAccount(formData: FormData) {
     const user = await currentUser()
-    if (!user) redirect("/sign-in")
+    if (!user) return
 
     const accountId = formData.get("id") as string
     const name = formData.get("name") as string

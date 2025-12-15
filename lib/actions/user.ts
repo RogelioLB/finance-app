@@ -13,7 +13,7 @@ export async function getUserDashboardData() {
     const user = await currentUser()
 
     if (!user) {
-        redirect("/sign-in")
+        return null
     }
 
     const email = user.emailAddresses[0]?.emailAddress

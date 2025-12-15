@@ -10,7 +10,7 @@ import { TransactionType } from "@prisma/client"
 
 export async function getTransactionData() {
     const user = await currentUser()
-    if (!user) redirect("/sign-in")
+    if (!user) return { transactions: [], accounts: [], categories: [] }
 
     const [transactions, accounts, categories] = await Promise.all([
         db.transaction.findMany({
@@ -59,7 +59,7 @@ export async function getTransactionData() {
 
 export async function createCategory(formData: FormData) {
     const user = await currentUser()
-    if (!user) redirect("/sign-in")
+    if (!user) return
 
     const name = formData.get("name") as string
     const type = formData.get("type") as TransactionType || "EXPENSE"
@@ -80,7 +80,7 @@ export async function createCategory(formData: FormData) {
 
 export async function createTransaction(formData: FormData) {
     const user = await currentUser()
-    if (!user) redirect("/sign-in")
+    if (!user) return
 
     const amount = parseFloat(formData.get("amount") as string)
     const description = formData.get("description") as string
@@ -179,7 +179,7 @@ export async function createTransaction(formData: FormData) {
 
 export async function deleteTransaction(id: string) {
     const user = await currentUser()
-    if (!user) redirect("/sign-in")
+    if (!user) return
 
     // Atomic Deletion and Reversal
     await db.$transaction(async (tx) => {
@@ -261,7 +261,7 @@ export async function deleteTransaction(id: string) {
 
 export async function updateTransaction(id: string, formData: FormData) {
     const user = await currentUser()
-    if (!user) redirect("/sign-in")
+    if (!user) return
 
     const amount = parseFloat(formData.get("amount") as string)
     const description = formData.get("description") as string
