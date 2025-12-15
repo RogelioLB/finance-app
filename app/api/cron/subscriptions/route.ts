@@ -2,7 +2,7 @@
 import { NextResponse } from 'next/server';
 import { db } from "@/lib/prisma";
 import { sendSubscriptionNotification } from "@/lib/email";
-import { RecurringInterval } from "@prisma/client";
+import { RecurringInterval, TransactionType } from "@prisma/client";
 
 // This route should be protected. Vercel Cron sends a header `Authorization: Bearer <CRON_SECRET>`
 // Since we might not have a secret set up easily in dev, checking for header presence or a query param is common.
@@ -34,57 +34,68 @@ export async function GET(request: Request) {
 
         console.log(`Found ${dueSubscriptions.length} due subscriptions.`);
 
-        const results = [];
+        const results: any[] = [];
 
         for (const sub of dueSubscriptions) {
-            // Transaction logic (duplicated from createTransaction effectively, but simplified)
-            // We use a transaction to ensure atomicity for each subscription processing
+            // 1. Create Transaction (Only if linked to an account)
+            if (sub.accountId) {
+                // Ensure Category exists
+                const category = await db.category.upsert({
+                    where: {
+                        userId_name_type: {
+                            userId: sub.userId,
+                            name: 'Subscriptions',
+                            type: TransactionType.EXPENSE
+                        }
+                    },
+                    update: {},
+                    create: {
+                        userId: sub.userId,
+                        name: 'Subscriptions',
+                        type: TransactionType.EXPENSE,
+                        icon: 'Calendar'
+                    }
+                });
 
-            await db.$transaction(async (tx) => {
-                // 1. Create Transaction
-                await tx.transaction.create({
+                await db.transaction.create({
                     data: {
                         userId: sub.userId,
                         amount: sub.amount,
                         description: `Subscription: ${sub.name}`,
-                        accountId: sub.accountId!, // Assuming accountId is present if active? Schema says optional.
-                        // If no accountId, we can't create a financial transaction linked to an account.
-                        // We should probably check sub.accountId.
+                        accountId: sub.accountId,
                         date: new Date(),
-                        type: 'EXPENSE',
-                        category: { connectOrCreate: { where: { userId_name_type: { userId: sub.userId, name: 'Subscriptions', type: 'EXPENSE' } }, create: { userId: sub.userId, name: 'Subscriptions', type: 'EXPENSE', icon: 'Calendar' } } }
+                        type: TransactionType.EXPENSE,
+                        categoryId: category.id
                     }
                 });
 
-                // 2. Update Balance (if account exists)
-                if (sub.accountId) {
-                    await tx.account.update({
-                        where: { id: sub.accountId },
-                        data: { balance: { decrement: sub.amount } }
-                    });
-                }
-
-                // 3. Update Next Payment Date
-                let newDate = new Date(sub.nextPaymentDate);
-                switch (sub.frequency) {
-                    case 'DAILY': newDate.setDate(newDate.getDate() + 1); break;
-                    case 'WEEKLY': newDate.setDate(newDate.getDate() + 7); break;
-                    case 'MONTHLY': newDate.setMonth(newDate.getMonth() + 1); break;
-                    case 'YEARLY': newDate.setFullYear(newDate.getFullYear() + 1); break;
-                }
-
-                await tx.subscription.update({
-                    where: { id: sub.id },
-                    data: { nextPaymentDate: newDate }
+                // 2. Update Balance
+                await db.account.update({
+                    where: { id: sub.accountId },
+                    data: { balance: { decrement: sub.amount } }
                 });
+            }
 
-                // 4. Send Email
-                if (sub.user.email) {
-                    await sendSubscriptionNotification(sub.user.email, sub.name, Number(sub.amount), newDate);
-                }
+            // 3. Update Next Payment Date
+            let newDate = new Date(sub.nextPaymentDate);
+            switch (sub.frequency) {
+                case 'DAILY': newDate.setDate(newDate.getDate() + 1); break;
+                case 'WEEKLY': newDate.setDate(newDate.getDate() + 7); break;
+                case 'MONTHLY': newDate.setMonth(newDate.getMonth() + 1); break;
+                case 'YEARLY': newDate.setFullYear(newDate.getFullYear() + 1); break;
+            }
 
-                results.push({ id: sub.id, name: sub.name, status: 'processed' });
+            await db.subscription.update({
+                where: { id: sub.id },
+                data: { nextPaymentDate: newDate }
             });
+
+            // 4. Send Email
+            if (sub.user.email) {
+                await sendSubscriptionNotification(sub.user.email, sub.name, Number(sub.amount), newDate);
+            }
+
+            results.push({ id: sub.id, name: sub.name, status: 'processed' });
         }
 
         return NextResponse.json({ success: true, processed: results.length, details: results });
@@ -94,3 +105,4 @@ export async function GET(request: Request) {
         return NextResponse.json({ success: false, error: 'Internal Server Error' }, { status: 500 });
     }
 }
+
