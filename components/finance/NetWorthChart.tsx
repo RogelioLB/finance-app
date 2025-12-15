@@ -3,24 +3,21 @@
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts"
 import { useTheme } from "next-themes"
 
-const data = [
-    { month: "Jan", amount: 4000 },
-    { month: "Feb", amount: 4500 },
-    { month: "Mar", amount: 4200 },
-    { month: "Apr", amount: 4800 },
-    { month: "May", amount: 5000 },
-    { month: "Jun", amount: 5500 },
-    { month: "Jul", amount: 5300 },
-    { month: "Aug", amount: 6000 },
-    { month: "Sep", amount: 6200 },
-    { month: "Oct", amount: 6800 },
-    { month: "Nov", amount: 7200 },
-    { month: "Dec", amount: 7800 },
-]
+interface NetWorthChartProps {
+    data?: { name: string; value: number }[]
+}
 
-export function NetWorthChart() {
+export function NetWorthChart({ data }: NetWorthChartProps) {
     const { theme } = useTheme()
     const isDark = theme === "dark"
+
+    if (!data || data.length === 0) {
+        return (
+            <div className="h-[300px] w-full flex items-center justify-center text-muted-foreground">
+                No data available
+            </div>
+        )
+    }
 
     return (
         <div className="h-[300px] w-full">
@@ -33,7 +30,7 @@ export function NetWorthChart() {
                         </linearGradient>
                     </defs>
                     <XAxis
-                        dataKey="month"
+                        dataKey="name"
                         stroke="#888888"
                         fontSize={12}
                         tickLine={false}
@@ -49,11 +46,12 @@ export function NetWorthChart() {
                     <Tooltip
                         contentStyle={{ backgroundColor: isDark ? "#1e293b" : "#fff", borderRadius: "8px", border: "1px solid #e2e8f0" }}
                         itemStyle={{ color: "#6366f1" }}
+                        formatter={(value: number) => [`$${value.toLocaleString()}`, "Net Worth"]}
                     />
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isDark ? "#334155" : "#e2e8f0"} />
                     <Area
                         type="monotone"
-                        dataKey="amount"
+                        dataKey="value"
                         stroke="#6366f1"
                         strokeWidth={2}
                         fillOpacity={1}

@@ -47,6 +47,7 @@ model User {
   budgets       Budget[]
   goals         Goal[]
   subscriptions Subscription[]
+  debts         Debt[]
 
   @@map("users")
 }
@@ -74,6 +75,7 @@ model Account {
 
   transactions  Transaction[]
   subscriptions Subscription[]
+  debts         Debt[]
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
 
@@ -169,4 +171,26 @@ model Subscription {
   updatedAt DateTime @updatedAt
 
   @@map("subscriptions")
+}
+
+model Debt {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Optional link to an account (e.g. specific purchase on a Credit Card)
+  accountId String?
+  account   Account? @relation(fields: [accountId], references: [id])
+
+  name            String
+  totalAmount     Decimal // Original debt amount
+  remainingAmount Decimal // What is left to pay
+  interestRate    Decimal?
+  minimumPayment  Decimal?
+  dueDate         Int? // Day of month
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("debts")
 }

@@ -19,13 +19,15 @@ export default async function DashboardPage() {
         return null
     }
 
-    const { user, netWorth, recentTransactions } = dashboardData
+    const { user, netWorth, recentTransactions, monthlyIncome, monthlyExpenses, chartData } = dashboardData
     const { accounts, categories } = transactionData
 
     // Safety checks for undefined values
     const netWorthValue = netWorth?.toLocaleString() || "0.00"
     const userName = user.name?.split(' ')[0] || "User"
     const txList = recentTransactions || []
+
+    const savingsRate = monthlyIncome > 0 ? ((monthlyIncome - monthlyExpenses) / monthlyIncome * 100).toFixed(1) : "0"
 
     return (
         <div className="space-y-6">
@@ -47,28 +49,30 @@ export default async function DashboardPage() {
                     title="Total Net Worth"
                     value={`$${netWorthValue}`}
                     icon={Wallet}
-                    trend={12.5}
-                    trendLabel="from last month"
+                    trend={0} // We could calculate this from chartData
+                    trendLabel="Current Balance"
                 />
                 <StatCard
                     title="Monthly Income"
-                    value="$0.00"
+                    value={`$${monthlyIncome.toLocaleString()}`}
                     icon={DollarSign}
                     trend={0}
-                    trendLabel="vs last month"
+                    trendLabel="this month"
+                />
+                <StatCard
+                    title="Monthly Expenses"
+                    value={`$${monthlyExpenses.toLocaleString()}`}
+                    icon={TrendingUp}
+                    trend={0}
+                    className="text-red-500" // Optional styling
+                    trendLabel="this month"
                 />
                 <StatCard
                     title="Savings Rate"
-                    value="0%"
+                    value={`${savingsRate}%`}
                     icon={PiggyBank}
                     trend={0}
-                    trendLabel="target 30%"
-                />
-                <StatCard
-                    title="Daily Growth"
-                    value="+$0.00"
-                    icon={TrendingUp}
-                    description="Interest & Investments"
+                    trendLabel="of income"
                 />
             </div>
 
@@ -77,10 +81,10 @@ export default async function DashboardPage() {
                 <Card className="col-span-4 lg:col-span-5">
                     <CardHeader>
                         <CardTitle>Net Worth Growth</CardTitle>
-                        <CardDescription>Your financial trajectory over the last 12 months.</CardDescription>
+                        <CardDescription>Your estimated financial trajectory over the last 6 months.</CardDescription>
                     </CardHeader>
                     <CardContent className="pl-2">
-                        <NetWorthChart />
+                        <NetWorthChart data={chartData} />
                     </CardContent>
                 </Card>
 

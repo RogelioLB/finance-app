@@ -58,14 +58,10 @@ export async function GET(request: Request) {
 
                 // 2. Update Balance (if account exists)
                 if (sub.accountId) {
-                    const account = sub.account;
-                    if (account) {
-                        if (account.type === 'CREDIT_CARD' || account.type === 'LOAN') {
-                            await tx.account.update({ where: { id: sub.accountId }, data: { balance: { increment: sub.amount } } });
-                        } else {
-                            await tx.account.update({ where: { id: sub.accountId }, data: { balance: { decrement: sub.amount } } });
-                        }
-                    }
+                    await tx.account.update({
+                        where: { id: sub.accountId },
+                        data: { balance: { decrement: sub.amount } }
+                    });
                 }
 
                 // 3. Update Next Payment Date
