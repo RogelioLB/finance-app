@@ -7,7 +7,7 @@ import { Separator } from "@/components/ui/separator"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { LayoutDashboard, CreditCard, Wallet, Wrench, Settings, Menu, ChevronLeft, ChevronRight } from "lucide-react"
+import { LayoutDashboard, CreditCard, Wallet, Wrench, Settings, Menu, ChevronLeft, ChevronRight, Sparkles } from "lucide-react"
 import { ModeToggle } from "./mode-toggle"
 
 interface SidebarNavProps {
@@ -32,6 +32,7 @@ export function SidebarNav({ className }: SidebarNavProps) {
         { href: "/dashboard/accounts", icon: Wallet, label: "Accounts" },
         { href: "/dashboard/transactions", icon: CreditCard, label: "Transactions" },
         { href: "/dashboard/tools", icon: Wrench, label: "Tools" },
+        { href: "/dashboard/advisor", icon: Sparkles, label: "Advisor" },
         { href: "/dashboard/settings", icon: Settings, label: "Settings" },
     ]
 

@@ -152,6 +152,22 @@ export async function getUserDashboardData() {
     // Usually we want "End of Month" values.
     // But this is fine for a trend line.
 
+    // Calculate Projected Net Worth (5 years)
+    // Formula: Future Value with compound growth + monthly contributions
+    const monthlyNetCashflow = Number(incomeStat) - Number(expenseStat)
+    const annualReturnRate = 0.07 // 7% average market return
+    const monthlyReturn = annualReturnRate / 12
+
+    function calculateFutureValue(months: number): number {
+        let value = netWorth
+        for (let i = 0; i < months; i++) {
+            value = value * (1 + monthlyReturn) + monthlyNetCashflow
+        }
+        return Math.round(value)
+    }
+
+    const projectedWealth5Years = calculateFutureValue(60) // 5 years = 60 months
+
     return {
         user: dbUser,
         netWorth,
@@ -159,6 +175,7 @@ export async function getUserDashboardData() {
         monthlyExpenses: Number(expenseStat),
         accountsCount: accounts.length,
         recentTransactions: transactions,
-        chartData
+        chartData,
+        projectedWealth5Years
     }
 }

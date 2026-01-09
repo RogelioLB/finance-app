@@ -19,7 +19,7 @@ export default async function DashboardPage() {
         return null
     }
 
-    const { user, netWorth, recentTransactions, monthlyIncome, monthlyExpenses, chartData } = dashboardData
+    const { user, netWorth, recentTransactions, monthlyIncome, monthlyExpenses, chartData, projectedWealth5Years } = dashboardData
     const { accounts, categories } = transactionData
 
     // Safety checks for undefined values
@@ -97,8 +97,8 @@ export default async function DashboardPage() {
                             <CardDescription className="text-indigo-200/70">In 5 Years</CardDescription>
                         </CardHeader>
                         <CardContent>
-                            <div className="text-3xl font-bold mb-2">$0</div>
-                            <p className="text-xs text-indigo-300">Based on your current savings trend.</p>
+                            <div className="text-3xl font-bold mb-2">${(projectedWealth5Years || 0).toLocaleString()}</div>
+                            <p className="text-xs text-indigo-300">Based on your current savings trend and 7% annual returns.</p>
                         </CardContent>
                     </Card>
 
